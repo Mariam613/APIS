@@ -12,6 +12,15 @@ const port = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.urlencoded());
 
+//middleware
+app.use((req, res, next) => {
+  res.json({
+    "request url": req.url,
+    method: req.method,
+    "current time": Date.now()
+  });
+});
+
 app.use("/posts", postRoute);
 app.use("/users", userRoute);
 

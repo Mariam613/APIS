@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router(); //create router
-const mongoose = require("mongoose");
+const querystring = require("querystring");
 
 const Post = require("../models/post");
 const authenticationMiddleWare = require("../middlewares/authentication");
@@ -26,16 +26,21 @@ router.post("/", authenticationMiddleWare, async (req, res, next) => {
     // res.status(401);
   }
 });
-router.get("/:id", authenticationMiddleWare, async (req, res, next) => {
-  try {
-    const id = req.params.id;
-    const user = await Post.findById(id).populate("user");
-    res.status(200).json(user);
-  } catch (err) {
-    err.statusCode = 400;
-    next(err);
+router.get(
+  "/:id",
+  authenticationMiddleWare,
+  ownnerAuthorization,
+  async (req, res, next) => {
+    try {
+      const id = req.params.id;
+      const user = await Post.findById(id).populate("user");
+      res.status(200).json(user);
+    } catch (err) {
+      err.statusCode = 400;
+      next(err);
+    }
   }
-});
+);
 //edit
 router.patch(
   "/:id",
@@ -63,8 +68,16 @@ router.patch(
     });
   }
 );
+router.get("", async (req, res, next) => {
+  const limit = req.query.limit ? req.query.limit : 10;
+  const skip = req.query.skip ? req.query.skip : 0;
+  const posts = await Post.find()
+    .skip(Number(skip))
+    .limit(Number(limit));
+  req.json({ posts });
+});
 //Delete
-router.delete("/:id", async (req, res, next) => {
+router.delete("/:id", ownnerAuthorization, async (req, res, next) => {
   const id = req.params.id;
   await Post.findByIdAndDelete(id);
   res.status(200).json({ message: "Post is Deleted" });

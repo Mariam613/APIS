@@ -56,50 +56,61 @@ router.get("/", authenticationMiddleWare, async (req, res, next) => {
   const arrOfFirstNames = await users.map(el => el.firstName);
   res.json(arrOfFirstNames);
 });
+//edit
+router.patch(
+  "/",
+  authenticationMiddleWare,
+  validationMidddleware(
+    check("password")
+      .isLength({ min: 5 })
+      .withMessage("must be at least 5 chars long")
+      .matches(/\d/)
+      .withMessage("must contain a number")
+    // check("username").isEmail()
+  ),
+  async (req, res, next) => {
+    const id = req.user.id;
+    const { username, password, firstName, age } = req.body;
+    //1.
+    const theUserAfterEdit = await User.findByIdAndUpdate(
+      id,
+      {
+        username,
+        password,
+        firstName,
+        age
+      },
+      {
+        omitUndefined: true,
+        new: true
+      }
+    );
+    // another way
+    // const user = await User.findById(id);
+    // const theUserAfterEdit = await user.update(
+    //   {
+    //     username,
+    //     password,
+    //     firstName,
+    //     age
+    //   },
+    //   {
+    //     omitUndefined: true,
+    //     new: true
+    //   }
+    // );
+    res.json({
+      message: "user was edited successfully",
+      user: theUserAfterEdit
+    });
+  }
+);
 
 //Delete
-router.delete("/:id", async (req, res, next) => {
-  const id = req.params.id;
+router.delete("/", authenticationMiddleWare, async (req, res, next) => {
+  const id = req.user.id;
   const deletedUser = await User.findByIdAndDelete(id);
   res.status(200).json({ message: "user is Deleted" });
-});
-
-//edit
-router.patch("/:id", async (req, res, next) => {
-  const id = req.params.id;
-  const { username, password, firstName, age } = req.body;
-  //1.
-  const theUserAfterEdit = await User.findByIdAndUpdate(
-    id,
-    {
-      username,
-      password,
-      firstName,
-      age
-    },
-    {
-      omitUndefined: true,
-      new: true
-    }
-  );
-  // another way
-  // const user = await User.findById(id);
-  // const theUserAfterEdit = await user.update(
-  //   {
-  //     username,
-  //     password,
-  //     firstName,
-  //     age
-  //   },
-  //   {
-  //     omitUndefined: true,
-  //     new: true
-  //   }
-  // );
-  res.json({
-    message: "user was edited successfully",
-    user: theUserAfterEdit
-  });
 });
 
 module.exports = router;
